@@ -3,7 +3,7 @@
  */
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { getVehiclesInfo, getCustomersInfo } from './actions';
+import { getVehiclesInfo, getCustomersInfo } from '../../actions';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import LocalizedStrings from 'react-localization';
 import Input from '@material-ui/core/Input';
@@ -17,9 +17,11 @@ import Checkbox from '@material-ui/core/Checkbox';
 import Container from '@material-ui/core/Container';
 import Grid from '@material-ui/core/Grid';
 import _ from 'lodash';
-import Card from '@material-ui/core/Card';
-import CardContent from '@material-ui/core/CardContent';
 import localeData from './locales';
+import ExpansionPanel from '@material-ui/core/ExpansionPanel';
+import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
+import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
 import {
     PieChart, Pie, Tooltip, Cell
@@ -53,7 +55,6 @@ class VehicleInfo extends Component {
             overviewData.push({ name: 'Online', value: onlineVehicles, color: '#0088FE' }, { name: 'Offline', value: offlineVehicles, color: '#00C49F' })
         }
         const filteredData = _.groupBy(props.data, 'customerId');
-        console.log(filteredData, props.customers)
         this.setState({ filteredData, overviewData })
     }
 
@@ -115,22 +116,27 @@ class VehicleInfo extends Component {
      */
     renderCustomerCards = (filteredData, customer) => {
         if (filteredData && filteredData[customer.id]) {
-            return (<Card>
-                <CardContent>
-                    <div className="customer-container">
-                        <h4 className="customer-name">Customer: </h4>{customer.name}
-                    </div>
+            return (<ExpansionPanel key={customer.id}>
+                <ExpansionPanelSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="panel1a-content"
+                    id="panel1a-header"
+                >
+                    <h4 className="customer-name">Customer: </h4>{customer.name}
+                </ExpansionPanelSummary>
+                <ExpansionPanelDetails>
                     <div className="vehicle-container">
-                        {filteredData[customer.id].map((data) =>
-                            <div className="car-container" style={{ backgroundColor: (data.status === 'online') ? '#7bd07b' : '#bb2b17' }}>
+                        {filteredData[customer.id].map((data, index) =>
+                            <div className="car-container" style={{ backgroundColor: (data.status === 'online') ? '#7bd07b' : '#bb2b17' }} key={index}>
                                 <div>{locales.VEHICLE_REGISTERATION}: {data.regNo} </div>
                                 <div>{locales.VEHICLE_ID}: {data.id}</div>
                                 <div>{locales.STATUS}: {data.status} </div>
                             </div>
+
                         )}
                     </div>
-                </CardContent>
-            </Card>)
+                </ExpansionPanelDetails>
+            </ExpansionPanel>)
         } else {
             return null;
         }
@@ -147,7 +153,7 @@ class VehicleInfo extends Component {
             return <CircularProgress />
         }
         return (
-            <Container maxWidth="md">
+            <Container maxWidth="md" data-test="appComponent">
                 <Grid container spacing={3}>
                     <Grid item xs={12}>
                         <div className="language-selector">
@@ -166,7 +172,7 @@ class VehicleInfo extends Component {
                         </div>
                     </Grid>
                     <Grid item xs={12}>
-                        <h1>{locales.VEHICAL_OVERVIEW_STATUS}</h1>
+                        <h1 id="vehicle-status-content">{locales.VEHICAL_OVERVIEW_STATUS}</h1>
                     </Grid>
                     {/* Selection Dropdowns */}
                     <Grid item xs={4}>
@@ -233,6 +239,7 @@ class VehicleInfo extends Component {
 
                     <Grid item xs={12}>
                         <Grid item xs={12}>
+
                             {customers && customers.map(customer => this.renderCustomerCards(filteredData, customer))}
                         </Grid>
                     </Grid>
@@ -244,8 +251,8 @@ class VehicleInfo extends Component {
 
 // map state to props
 const mapStateToProps = ({ vehicles, customers }) => {
-    const { data, loading, overviewData } = vehicles;
-    return { data, loading, overviewData, customers: customers.customers };
+    const { data, loading } = vehicles;
+    return { data, loading, customers: customers.customers };
 }
 
 export default connect(mapStateToProps, {

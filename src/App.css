@@ -38,10 +38,10 @@
   background-color: #ccc;
   margin: 10px;
   border-radius: 8px;
+  display: inline-block;
 }
 
 .vehicle-container{
-  height: 200px;
   overflow: scroll;
 }
 
