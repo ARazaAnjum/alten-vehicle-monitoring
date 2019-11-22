@@ -34,6 +34,7 @@ class VehicleInfo extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            simulateTime: 60000,
             selectedLanguage: 'en',
             selectedCustomer: [],
             selectedStatus: '',
@@ -43,26 +44,47 @@ class VehicleInfo extends Component {
     }
 
     componentDidMount() {
+        const self = this;
         this.props.getVehiclesInfo();
         this.props.getCustomersInfo();
+        // Function to simulate vehicles status randomly
+        setInterval(function () {
+            const { data } = self.props
+            const onState = _.random(0, 1);
+            const selectedVehicle = _.random(0, data.length - 1);
+            if (onState === 1) {
+                data[selectedVehicle]['status'] = (data[selectedVehicle]['status'] === 'offline') ? 'online' : 'offline';
+                self.getVehiclesData(data);
+                self.getVehiclesOverview(data)
+            }
+
+        }, this.state.simulateTime);
     }
 
     componentWillReceiveProps(props) {
-        let overviewData = [];
-        if (props.data && !!props.data.length) {
-            const onlineVehicles = props.data.filter((x) => x.status === 'online').length;
-            const offlineVehicles = props.data.filter((x) => x.status === 'offline').length;
-            overviewData.push({ name: 'Online', value: onlineVehicles, color: '#0088FE' }, { name: 'Offline', value: offlineVehicles, color: '#00C49F' })
-        }
         const filteredData = _.groupBy(props.data, 'customerId');
-        this.setState({ filteredData, overviewData })
+        this.setState({ filteredData }, () => {
+            this.getVehiclesOverview(this.props.data)
+        })
     }
+
+    /**
+    * function to get overview status for vehicles
+    */
+    getVehiclesOverview = (data) => {
+        let overviewData = [];
+        if (data && !!data.length) {
+            const onlineVehicles = data.filter((x) => x.status === 'online').length;
+            const offlineVehicles = data.filter((x) => x.status === 'offline').length;
+            overviewData.push({ name: 'Online', value: onlineVehicles, color: '#7bd07b' }, { name: 'Offline', value: offlineVehicles, color: '#bb2b17' })
+        }
+        this.setState({ overviewData })
+    };
 
     /**
      * function to filter related data based upon user selection
      */
-    getVehiclesData = () => {
-        const { data } = this.props;
+    getVehiclesData = (data) => {
         const { selectedCustomer, selectedStatus } = this.state
         let filteredData = _.groupBy(data, 'customerId');
         if (!!selectedCustomer.length && !!selectedStatus) {
@@ -85,7 +107,7 @@ class VehicleInfo extends Component {
         this.setState({
             [field]: value
         }, () => {
-            this.getVehiclesData();
+            this.getVehiclesData(this.props.data);
         });
     };
 
@@ -107,7 +129,7 @@ class VehicleInfo extends Component {
             selectedStatus: null,
             selectedCustomer: []
         }, () => {
-            this.getVehiclesData();
+            this.getVehiclesData(this.props.data);
         });
     };
 
