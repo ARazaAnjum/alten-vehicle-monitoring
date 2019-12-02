@@ -41,10 +41,6 @@
   display: inline-block;
 }
 
-.vehicle-container{
-  overflow: scroll;
-}
-
 .recharts-wrapper{
   left: 35%;
 }
